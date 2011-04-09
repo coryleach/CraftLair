@@ -1,0 +1,25 @@
+
+Create method to define dungeon area
+- Data structure set of cuboids
+- Name the dungeon area
+- Each subzone has a monster table
+- Each subzone has list of available monster prefixes
+- Each subzone also has a treasure table
+- Subzone and monster treasure tables are added together.
+- Dungeon Subzone enter messages
+- Dungeon Zone enter and exit messages
+- Monsters need to spawn regardless of lighting
+- Outside monsters should not spawn or enter dungeon zones
+
+Monsters
+- Each monster is added to a list and associated with a prefix
+- Prefix object allocated for every monster
+- Prefix has a name, adds, multipliers and drops
+- modify base health and damage
+
+Treasure table data structure
+- Each drop is calculated separately
+
+Research can we modify properties of an item.
+Save all data to disk.
+
