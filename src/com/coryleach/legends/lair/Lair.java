@@ -73,7 +73,7 @@ public class Lair extends JavaPlugin {
          */
         
     	try {
-
+            
     		//Setup PlayerListener class to preprocess command events
     		pm.registerEvent(Event.Type.PLAYER_COMMAND_PREPROCESS, playerListener, Priority.Normal, this);
     		
@@ -89,6 +89,11 @@ public class Lair extends JavaPlugin {
         //Say Hello
     	System.out.println("Legends.Lair Hello!");
 
+    }
+
+    //This method can be removed after testing
+    public static void main(String[] args) {
+        //Do Nothing
     }
     
 }
