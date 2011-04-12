@@ -1,0 +1,5 @@
+name: Lair
+main: com.coryleach.legends.lair.Lair
+version: 0.1
+depend:
+  - WorldEdit

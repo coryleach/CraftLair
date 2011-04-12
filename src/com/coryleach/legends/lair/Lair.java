@@ -1,6 +1,6 @@
 package com.coryleach.legends.lair;
 
-//import java.util.HashMap;
+import java.util.*;
 import java.util.logging.*;
 //import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
@@ -9,6 +9,17 @@ import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.*;
+import org.bukkit.entity.Player;
+import com.sk89q.worldedit.bukkit.*;
+import com.sk89q.worldedit.bukkit.selections.*;
+import com.sk89q.minecraft.util.commands.CommandPermissionsException;
+import com.sk89q.minecraft.util.commands.CommandUsageException;
+import com.sk89q.minecraft.util.commands.MissingNestedCommandException;
+import com.sk89q.minecraft.util.commands.UnhandledCommandException;
+import com.sk89q.minecraft.util.commands.WrappedCommandException;
+import com.sk89q.minecraft.util.commands.CommandsManager;
+import com.sk89q.worldedit.*;
+import com.sk89q.worldedit.commands.InsufficientArgumentsException;
 //import org.bukkit.command.*;
 
 
@@ -18,17 +29,19 @@ import org.bukkit.*;
  * @author coryleach
  */
 public class Lair extends JavaPlugin {
-	
-	//Private Members
+
+    //Private Members
     private final LairPlayerListener playerListener = new LairPlayerListener(this);
     //private final LairBlockListener blockListener = new LairBlockListener(this);
     private final LairEntityListener entityListener = new LairEntityListener(this);
     //private final HashMap<Player, Boolean> debugees = new HashMap<Player, Boolean>();
-    
+    private HashMap<String,Dungeon> dungeons;
+    private CommandsManager<Player> commandMap;
+
     //Public Members
     public Server server;
     public Logger log;
-    public LairCommandMap commandMap;
+    //public LairCommandMap commandMap;
 
     public void onDisable() {
         // TODO: Place any custom disable code here
@@ -48,9 +61,18 @@ public class Lair extends JavaPlugin {
     	//Setup Plugin Member Variables
     	server = getServer();
     	log = server.getLogger();
-    	commandMap = new LairCommandMap(server);
-    	
-		PluginManager pm = getServer().getPluginManager();
+
+        commandMap = new CommandsManager<Player>() {
+            @Override
+            public boolean hasPermission(Player player, String perm) {
+                //TODO: Implement Permissions
+                return true;
+            }
+        };
+
+        dungeons = new HashMap<String,Dungeon>();
+
+	PluginManager pm = getServer().getPluginManager();
 
     	try {
     		// Register our events
@@ -61,16 +83,11 @@ public class Lair extends JavaPlugin {
     		pm.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Priority.Normal, this);
     		
     	} catch ( Exception e ) {
-        	System.out.println("Exception While Registering Events");
-        	System.out.println(e.getMessage());
-    	}
-    	
-        /*pm.registerEvent(Event.Type.PLAYER_JOIN, playerListener, Priority.Normal, this);
-        pm.registerEvent(Event.Type.PLAYER_QUIT, playerListener, Priority.Normal, this);
-        pm.registerEvent(Event.Type.PLAYER_MOVE, playerListener, Priority.Normal, this);
-        pm.registerEvent(Event.Type.BLOCK_PHYSICS, blockListener, Priority.Normal, this);
-        pm.registerEvent(Event.Type.BLOCK_CANBUILD, blockListener, Priority.Normal, this);
-         */
+
+            log.info("Exception while registering events.");
+            log.info(e.getMessage());
+
+        }
         
     	try {
             
@@ -78,22 +95,105 @@ public class Lair extends JavaPlugin {
     		pm.registerEvent(Event.Type.PLAYER_COMMAND_PREPROCESS, playerListener, Priority.Normal, this);
     		
     		//Register Commands to the command map
-    		commandMap.register("/lairlist", "/lairlist", new LairListCommand(this,"/lairlist"));
-    		commandMap.register("/lairspawn", "/lairspawn", new LairSpawnCommand(this,"/lairspawn"));
+                commandMap.register(LairDungeonCommand.class);
     		
     	} catch ( Exception e ) {
-        	System.out.println("Exception While Registering Commands");
-        	System.out.println(e.getMessage());
+
+                log.info("Exception Registering Commands: ");
+                log.info(e.getMessage());
+                
     	}
     	
         //Say Hello
-    	System.out.println("Legends.Lair Hello!");
+        log.info("Legends.Lair Hello!");
+
+    }
+
+    public void addDungeon(Dungeon dungeon) {
+
+        String name = dungeon.getName();
+        this.dungeons.put(name, dungeon);
+
+    }
+
+    public String[] getDungeonList() {
+
+        Set<String> set = this.dungeons.keySet();
+
+        return set.toArray(new String[1]);
 
     }
 
     //This method can be removed after testing
     public static void main(String[] args) {
         //Do Nothing
+    }
+
+    public CuboidSelection getSelection(Player player) {
+        
+        PluginManager pm = getServer().getPluginManager();
+
+        if ( !pm.isPluginEnabled("WorldEdit") ) {
+            player.sendMessage("This plugin requres the WorldEdit plugin");
+            return null;
+        }
+
+        WorldEditPlugin worldEdit = (WorldEditPlugin)pm.getPlugin("WorldEdit");
+
+        Selection selection = worldEdit.getSelection(player);
+
+        //We only work with Cuboid selections
+        if ( !(selection instanceof CuboidSelection) ) {
+            return null;
+        }
+
+        return (CuboidSelection)selection;
+
+    }
+
+    public boolean handleCommand(Player player, String[] split) {
+
+        try {
+            split[0] = split[0].substring(1);
+            
+            // Quick script shortcut
+            if (split[0].matches("^[^/].*\\.js$")) {
+                String[] newSplit = new String[split.length + 1];
+                System.arraycopy(split, 0, newSplit, 1, split.length);
+                newSplit[0] = "cs";
+                newSplit[1] = newSplit[1];
+                split = newSplit;
+            }
+
+            // No command found!
+            if (!commandMap.hasCommand(split[0])) {
+                return false;
+            }
+
+            try {
+                commandMap.execute(split, player, this, player);
+            } catch (CommandPermissionsException e) {
+                player.sendMessage("You don't have permission to do this.");
+            } catch (MissingNestedCommandException e) {
+                player.sendMessage(e.getUsage());
+            } catch (CommandUsageException e) {
+                player.sendMessage(e.getMessage());
+                player.sendMessage(e.getUsage());
+            } catch (WrappedCommandException e) {
+                throw e.getCause();
+            } catch (UnhandledCommandException e) {
+                return false;
+            } finally {
+
+            }
+            
+        } catch (Throwable excp) {
+            player.sendMessage("Please report this error:");
+            player.sendMessage(excp.getMessage());
+        }
+
+        return true;
+        
     }
     
 }

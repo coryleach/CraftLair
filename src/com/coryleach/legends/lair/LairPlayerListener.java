@@ -27,14 +27,16 @@ public class LairPlayerListener extends PlayerListener {
     
     @Override
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-    	
-    	//Leave the processing to the command map
-    	if ( plugin.commandMap.dispatch(event.getPlayer(), event.getMessage()) ) {
-    		//dispatch returned true which means we used up the event
-    		event.setCancelled(true);
-    	}
+
+        String[] split = event.getMessage().split(" ");
+
+        if ( plugin.handleCommand(event.getPlayer(), split) ) {
+            event.setCancelled(true);
+        }
     	
     }
-    
+
+
+
 }
 
