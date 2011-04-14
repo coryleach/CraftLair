@@ -14,7 +14,21 @@ import org.bukkit.entity.*;
 public class EditSession {
 
     protected Player player;
+    protected Dungeon dungeon;
 
+    public EditSession(Player player, Dungeon dungeon) {
 
+        this.player = player;
+        this.dungeon = dungeon;
+
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public Dungeon getDungeon() {
+        return dungeon;
+    }
 
 }

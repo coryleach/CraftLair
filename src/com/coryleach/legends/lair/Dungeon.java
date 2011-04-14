@@ -113,6 +113,29 @@ public class Dungeon {
         
     }
 
+    public boolean isValidSubzone(DungeonSubzone candidateZone) {
+
+        System.out.print("Candidate Zone:");
+        candidateZone.print();
+
+        for ( int i = 0; i < subzones.size(); i++ ) {
+
+            DungeonSubzone subzone = subzones.get(i);
+            System.out.print("Subzone:");
+            subzone.print();
+
+            if ( candidateZone.intersects(subzone) ) {
+                System.out.print("is not valid subzone");
+                return false;
+            }
+
+        }
+
+        System.out.print("is valid subzone");
+        return true;
+
+    }
+
     protected void updateMinimumLocation(Location location) {
 
         //Check that minimum location is already defined

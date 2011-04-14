@@ -32,6 +32,8 @@ public class LairDungeonCommand {
             Dungeon dungeon = new Dungeon(name);
             plugin.addDungeon(dungeon);
 
+            plugin.createSessionForPlayer(player, dungeon);
+
         }
 
         @Command(
@@ -46,8 +48,16 @@ public class LairDungeonCommand {
         public static void dungeonEdit(CommandContext args, Lair plugin, Player player) {
 
             //This function should start an editing session for the specified dungeon
-            player.sendMessage("Dungeon Edit");
+            String name = args.getString(0);
+            Dungeon dungeon = plugin.getDungeonWithName(name);
 
+            if ( dungeon == null ) {
+                player.sendMessage("Dungeon does not exist.");
+            } else {
+                plugin.createSessionForPlayer(player,dungeon);
+                player.sendMessage("Now editing dungeon " + name);
+            }
+            
         }
 
         @Command(
@@ -61,6 +71,23 @@ public class LairDungeonCommand {
         @CommandPermissions({"lair.dungeon.edit"})
         public static void dungeonSubzone(CommandContext args, Lair plugin, Player player) {
 
+            EditSession session = plugin.getSessionForPlayer(player);
+
+            if ( session == null ) {
+                player.sendMessage("You must first start editing a dungeon!");
+                return;
+            }
+
+            Dungeon dungeon = session.getDungeon();
+
+            String subcommand = null;
+
+            if ( args.length() < 1 ) {
+                subcommand = "add";
+            } else {
+                subcommand = args.getString(0);
+            }
+
             //This function should start an editing session for the specified dungeon
             player.sendMessage("Dungeon Add Subzone");
 
@@ -71,14 +98,25 @@ public class LairDungeonCommand {
             // current
             // select
 
-            //Add current subzone to dungeon
-            //Can only add a subzone that contains no part of any other subzone
-            CuboidSelection selection = plugin.getSelection(player);
+            if ( subcommand.equals("add") ) {
 
-            //Check to see if this selection intersects with any existing
+                //Add current subzone to dungeon
+                //Can only add a subzone that contains no part of any other subzone
+                CuboidSelection selection = plugin.getSelection(player);
+                DungeonSubzone subzone = new DungeonSubzone(selection);
+                System.out.print("Zone with player selection:");
+                subzone.print();
 
-            //If Not then we can add it
-            
+                //Check to see if this selection intersects with any existing
+                if ( !dungeon.isValidSubzone(subzone) ) {
+                    player.sendMessage("Subzone collision. Subzones must not intersect.");
+                    return;
+                }
+
+                //If Not then we can add it
+                dungeon.addSubzone(subzone);
+                
+            }
 
         }
 

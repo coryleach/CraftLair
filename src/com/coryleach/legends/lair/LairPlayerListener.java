@@ -1,5 +1,7 @@
 package com.coryleach.legends.lair;
 
+import org.bukkit.*;
+import org.bukkit.entity.Player;
 import org.bukkit.event.player.*;
 
 /**
@@ -22,7 +24,31 @@ public class LairPlayerListener extends PlayerListener {
     }
 
     @Override
-    public void onPlayerMove(PlayerMoveEvent event) {    	
+    public void onPlayerMove(PlayerMoveEvent event) {
+
+        Player player = event.getPlayer();
+        Location fromLocation = event.getFrom();
+        Location toLocation = event.getTo();
+
+        Dungeon fromDungeon = plugin.getDungeonForLocation(fromLocation);
+
+        //Check to see if dungeons will be the same
+        if ( fromDungeon != null && fromDungeon.containsLocation(toLocation) ) {
+            //We haven't gone anywhere new
+            return;
+        }
+
+        Dungeon toDungeon = plugin.getDungeonForLocation(toLocation);
+
+        if ( fromDungeon != null ) {
+            player.sendMessage("Leaving Dungeon" + fromDungeon.getName());
+            return;
+        }
+
+        if ( toDungeon != null ) {
+            player.sendMessage("Entering Dungeon" + toDungeon.getName());
+        }
+
     }
     
     @Override
